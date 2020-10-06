@@ -2,6 +2,7 @@ package session
 
 import (
 	"database/sql"
+	"github.com/futhergo/gee-orm/clause"
 	"github.com/futhergo/gee-orm/dialect"
 	"github.com/futhergo/gee-orm/log"
 	"github.com/futhergo/gee-orm/schema"
@@ -12,6 +13,7 @@ type Session struct {
 	db *sql.DB
 	dialect dialect.Dialect
 	refTable *schema.Schema
+	clause clause.Clause
 	sql strings.Builder
 	sqlVars []interface{}
 }
@@ -27,6 +29,7 @@ func New(db *sql.DB, d dialect.Dialect) *Session {
 func (s *Session)clear() {
 	s.sql.Reset()
 	s.sqlVars = make([]interface{}, 0)
+	s.clause = clause.Clause{}
 }
 
 func (s *Session)DB() *sql.DB {

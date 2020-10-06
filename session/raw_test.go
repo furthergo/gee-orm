@@ -26,8 +26,8 @@ func NewSession() *Session {
 func TestSession_Exec(t *testing.T) {
 	s := NewSession()
 	_, _ = s.Raw("DROP TABLE IF EXISTS User;").Exec()
-	_, _ = s.Raw("CREATE TABLE User(Name text);").Exec()
-	_, _ = s.Raw("CREATE TABLE User(Name text);").Exec()
+	_, _ = s.Raw("CREATE TABLE User(Name text, Age integer);").Exec()
+	_, _ = s.Raw("CREATE TABLE User(Name text, Age integer);").Exec()
 	result, _ := s.Raw("INSERT INTO User(`Name`) values (?), (?)", "Tom", "Jack").Exec()
 	if count, err := result.RowsAffected(); err != nil || count != 2 {
 		t.Fatal("expect 2, but got", count)
@@ -38,9 +38,17 @@ func TestSession_QueryRows(t *testing.T) {
 	s := NewSession()
 	_, _ = s.Raw("DROP TABLE IF EXISTS User;").Exec()
 	_, _ = s.Raw("CREATE TABLE User(Name text);").Exec()
-	row := s.Raw("SELECT count(*) FROM User").Query()
-	var count int
-	if err := row.Scan(&count); err != nil || count != 0 {
-		t.Fatal("failed to query db", err)
+	_, _ = s.Raw("INSERT INTO User(`Name`) values (?), (?)", "Tom", "Jack").Exec()
+	rows, _ := s.Raw("SELECT * FROM User LIMIT 1").QueryRows()
+
+	var names []string
+	for rows.Next() {
+		var name string
+		_ = rows.Scan(&name)
+		names = append(names, name)
+	}
+
+	if len(names) != 1 {
+		t.Fatal("failed to query db")
 	}
 }

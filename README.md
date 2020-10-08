@@ -15,7 +15,7 @@
 1. reflect
 2. package设计
 
-## 插入数据
+## 功能模块
 
 * Clause生成子句：INSERT/VALUES/SELECT/WHERE/LIMIT/ORDERBY
 * session/Record.go 封装ORM操作，
@@ -25,4 +25,8 @@
             * Model{} => Values: ("Tom", 15), ("Jack", 23)
             * INSERT INTO <tableName> VALUES (?, ?) ... Values.Join(", ");
     * Find：根据传入的切片类型，用反射生成Model，解析Schema，查询Rows，遍历得到真正的值添加回切片
-        
+    * Update/Delete/Count
+    * 函数返回指针本身链式调用
+* session/hooks：封装实现hook，定义特定的函数名，通过反射找到对应的函数并在合适的时机调用
+* session/transaction: 封装事务操作
+* geeorm.go：封装Engine相关的操作，一个Engine对应一个DB连接，生成N个Session用于操作

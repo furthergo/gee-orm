@@ -11,11 +11,18 @@ import (
 
 type Session struct {
 	db *sql.DB
+	tx *sql.Tx
 	dialect dialect.Dialect
 	refTable *schema.Schema
 	clause clause.Clause
 	sql strings.Builder
 	sqlVars []interface{}
+}
+
+type CommonDB interface {
+	QueryRow(query string, args ...interface{}) *sql.Row
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	Exec(query string, args ...interface{}) (sql.Result, error)
 }
 
 func New(db *sql.DB, d dialect.Dialect) *Session {
@@ -32,7 +39,10 @@ func (s *Session)clear() {
 	s.clause = clause.Clause{}
 }
 
-func (s *Session)DB() *sql.DB {
+func (s *Session)DB() CommonDB {
+	if s.tx != nil {
+		return s.tx
+	}
 	return s.db
 }
 
@@ -47,7 +57,7 @@ func (s *Session)Exec() (r sql.Result, err error) {
 	defer s.clear()
 	q := s.sql.String()
 	log.Info(q, s.sqlVars)
-	r, err = s.db.Exec(q, s.sqlVars...)
+	r, err = s.DB().Exec(q, s.sqlVars...)
 	if err != nil {
 		log.Error(err)
 	}
@@ -58,13 +68,13 @@ func (s *Session)Query() *sql.Row {
 	defer s.clear()
 	q := s.sql.String()
 	log.Info(q, s.sqlVars)
-	return s.db.QueryRow(q, s.sqlVars...)
+	return s.DB().QueryRow(q, s.sqlVars...)
 }
 
 func (s *Session)QueryRows() (rs *sql.Rows, err error) {
 	defer s.clear()
 	q := s.sql.String()
-	rs, err = s.db.Query(q, s.sqlVars...)
+	rs, err = s.DB().Query(q, s.sqlVars...)
 	if err != nil {
 		log.Error(q, s.sqlVars)
 	}

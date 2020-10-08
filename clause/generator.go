@@ -15,6 +15,9 @@ const (
 	LIMIT
 	WHERE
 	ORDERBY
+	UPDATE
+	DELETE
+	COUNT
 )
 
 var generators map[Type]generator
@@ -27,6 +30,9 @@ func init() {
 	generators[LIMIT] = _limit
 	generators[WHERE] = _where
 	generators[ORDERBY] = _orderby
+	generators[UPDATE] = _update
+	generators[DELETE] = _delete
+	generators[COUNT] = _count
 }
 
 func _insert(values ...interface{}) (string, []interface{}) {
@@ -83,5 +89,26 @@ func _where(values ...interface{}) (string, []interface{}) {
 
 func _orderby(values ...interface{}) (string, []interface{}) {
 	// ORDERBY age
-	return fmt.Sprintf("ORDERBY %s", values[0]), []interface{}{}
+	return fmt.Sprintf("ORDER BY %s", values[0]), []interface{}{}
+}
+
+func _update(values ...interface{}) (string, []interface{}) {
+	// UPDATE <tableName> SET field1=?, field2=?, ...
+	tableName := values[0]
+	kvs := values[1].(map[string]interface{})
+	var ks []string
+	var vs []interface{}
+	for k, v := range kvs {
+		ks = append(ks, k+"=?")
+		vs = append(vs, v)
+	}
+	return fmt.Sprintf("UPDATE %s SET %s", tableName, strings.Join(ks, ", ")), vs
+}
+
+func _delete(values ...interface{}) (string, []interface{})  {
+	return fmt.Sprintf("DELETE FROM %s", values[0]), []interface{}{}
+}
+
+func _count(values ...interface{}) (string, []interface{}) {
+	return _select(values[0], []string{"count(*)"})
 }
